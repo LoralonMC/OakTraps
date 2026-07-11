@@ -1,0 +1,160 @@
+# ============================================================
+#  OakTraps
+#  Lure-based mob capture cages. Place a trap, lure a mob onto
+#  the pressure plate to capture it, then relocate or release.
+# ============================================================
+
+# Enable verbose debug logging.
+debug: false
+
+# ============================================================
+# TRAP ITEM
+# ============================================================
+# The item players place to deploy a cage. The block it becomes
+# is configured under "cage" below.
+trap-item:
+  material: BARREL
+  name: "<#E5C5D0>Mob Trap"
+  glow: true
+  # Lore shown on an empty (unset) trap.
+  lore-empty:
+    - "<#6C757D>An empty trap."
+    - ""
+    - "<#f2ebd7>Place it and lure a mob onto"
+    - "<#f2ebd7>the trap to capture it."
+  # Lore shown on a filled trap. Placeholders:
+  #   <entity_type>  <entity_name>  <entity_health>
+  #   <entity_max_health>  <entity_damage>
+  lore-filled:
+    - "<#6C757D>Holds: <#FCD472><entity_type>"
+    - ""
+    - "<#6C757D>ʜᴇᴀʟᴛʜ: <#FCD472><entity_health><#6C757D>/<#FCD472><entity_max_health>"
+    - "<#6C757D>ᴅᴀᴍᴀɢᴇ: <#FCD472><entity_damage>"
+    - ""
+    - "<#FCD472>[ᴘʟᴀᴄᴇ ᴛᴏ ᴅᴇᴘʟᴏʏ]"
+
+# ============================================================
+# CAPTURE RULES
+# ============================================================
+capture:
+  # Which mobs may be captured.
+  # mode BLACKLIST = everything except the list; WHITELIST = only the list.
+  # Names are vanilla entity ids (lowercase), e.g. zombie, cave_spider.
+  allowed-entities:
+    enabled: true
+    mode: BLACKLIST
+    list:
+      - "warden"
+  # Allow capturing tamed animals (wolves, cats, horses, ...).
+  can-trap-tamed: true
+  # Ticks between a mob stepping on the plate and being captured (20 = 1s). A
+  # short delay lets the pressure plate visibly depress — the trap "springs" —
+  # before the mob is caught. Set to 0 for instant capture.
+  trigger-delay-ticks: 10
+  # Restrict which worlds capturing works in.
+  worlds:
+    enabled: false
+    mode: BLACKLIST
+    list:
+      - "world_the_end"
+
+# ============================================================
+# CAGE
+# ============================================================
+cage:
+  # An ARMED (empty) trap is a flush pressure plate. A mob that steps on it is
+  # captured. Use a wooden plate so all mob sizes trigger it; players can't
+  # trigger their own traps.
+  pressure-plate: ACACIA_PRESSURE_PLATE
+  # A FILLED trap becomes this block (holds the captured mob). Right-click it to
+  # release the mob and get the trap back.
+  filled-block:
+    material: BARREL
+    data: "[facing=down,open=true]"
+  # The "cage" shown around an armed trap: five barrel block-displays
+  # (centre + north/south/east/west). Purely visual.
+  visual:
+    enabled: true
+    # Vertical offset (in blocks) of the flat barrel base.
+    barrel-y: 0.0
+    # Thickness (vertical scale) of each barrel slab: small = thin slab, 1.0 = a
+    # full-height barrel.
+    barrel-thickness: 0.03
+    # Thickness of the centre barrel piece. Keep it slightly different from
+    # barrel-thickness so the centre and sides don't z-fight at the seams.
+    center-thickness: 0.02
+    # Vertical offset of the coral "teeth" decoration.
+    decoration-y: -0.09
+    # Decorative block displayed in the centre of the cage (the dead coral fan
+    # looks like bear-trap "teeth"). It's a display entity, so it shows ON TOP of
+    # the cage without hiding the pressure-plate trigger. Set material to AIR to
+    # remove it.
+    decoration:
+      material: DEAD_BUBBLE_CORAL_FAN
+      data: "[waterlogged=false]"
+    barrels:
+      center:
+        material: BARREL
+        data: "[facing=down,open=true]"
+      north:
+        material: BARREL
+        data: "[facing=north,open=false]"
+      south:
+        material: BARREL
+        data: "[facing=south,open=false]"
+      east:
+        material: BARREL
+        data: "[facing=east,open=false]"
+      west:
+        material: BARREL
+        data: "[facing=west,open=false]"
+
+# ============================================================
+# RELEASE
+# ============================================================
+release:
+  # If true, releasing a mob breaks the trap instead of returning it — making
+  # each trap single-use. If false, the player gets the empty trap back.
+  break-on-release: false
+
+# ============================================================
+# PROTECTION (integration hooks)
+# ============================================================
+# Each only applies if the matching plugin is installed.
+protection:
+  # Respect WorldGuard build/region rights at the cage location.
+  respect-worldguard: true
+  # Respect Lands claims — a cage can't capture mobs in claims the
+  # placer isn't trusted in (no mob-stealing).
+  respect-lands: true
+  # Allow placing cages inside protected regions/claims at all.
+  allow-place-in-protected: false
+
+# ============================================================
+# MYTHICMOBS
+# ============================================================
+# Controls which MythicMobs can be captured (only if MythicMobs is installed).
+mythicmobs:
+  allowed:
+    enabled: false
+    mode: BLACKLIST
+    list: []
+
+# ============================================================
+# CRAFTING
+# ============================================================
+# Optional recipe for the empty trap item.
+crafting:
+  enabled: false
+  shape:
+    - "III"
+    - "I I"
+    - "IBI"
+  ingredients:
+    I: IRON_BARS
+    B: BARREL
+
+# ========================================
+#          DO NOT EDIT BELOW
+# ========================================
+config-version: 1

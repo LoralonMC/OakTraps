@@ -1,0 +1,51 @@
+# ============================================================
+#  OakTraps Messages
+# ============================================================
+# Gameplay messages use a text/display pair (display: chat | action_bar).
+# Command messages are flat strings under "commands:" (always chat).
+# Set any message to "" to disable it.
+#
+# Placeholders:
+#   <entity_type>  <entity_name>  <player>  <amount>
+# ============================================================
+
+# ------------------------------------------------------------
+# GAMEPLAY MESSAGES
+# ------------------------------------------------------------
+cage-placed:
+  text: "<#6C757D>[<#6B7A5E>ᴛʀᴀᴘ<#6C757D>] <#f2ebd7>Trap deployed. Lure a mob onto it."
+  display: chat
+
+cage-placed-filled:
+  text: "<#6C757D>[<#6B7A5E>ᴛʀᴀᴘ<#6C757D>] <#f2ebd7>Filled trap deployed."
+  display: chat
+
+place-denied:
+  text: "<#C27B6B>You can't place a trap here."
+  display: action_bar
+
+interact-denied:
+  text: "<#C27B6B>This trap belongs to someone else."
+  display: action_bar
+
+place-no-fit:
+  text: "<#C27B6B>Not enough room for a trap here."
+  display: action_bar
+
+mob-released:
+  text: "<#6C757D>[<#6B7A5E>ᴛʀᴀᴘ<#6C757D>] <#f2ebd7>Released <#FCD472><entity_type><#f2ebd7>."
+  display: chat
+
+capture-denied:
+  text: "<#C27B6B>That mob can't be trapped here."
+  display: action_bar
+
+# ============================================================
+# COMMAND MESSAGES
+# ============================================================
+commands:
+  help: "<#6C757D>[<#6B7A5E>ᴛʀᴀᴘ<#6C757D>] <#f2ebd7>OakTraps — <#FCD472>/oaktraps give <player> [amount]<#f2ebd7>, <#FCD472>/oaktraps reload"
+  reload-success: "<#6C757D>[<#6B7A5E>ᴛʀᴀᴘ<#6C757D>] <#8FAA87>Configuration reloaded!"
+  reload-failed: "<#6C757D>[<#C27B6B>ᴇʀʀᴏʀ<#6C757D>] <#C27B6B>Reload failed — check the console."
+  give-success: "<#6C757D>[<#6B7A5E>ᴛʀᴀᴘ<#6C757D>] <#f2ebd7>Gave <#FCD472><amount> <#f2ebd7>trap(s) to <#FCD472><player><#f2ebd7>."
+  player-not-found: "<#6C757D>[<#C27B6B>ᴇʀʀᴏʀ<#6C757D>] <#C27B6B>Player not found."

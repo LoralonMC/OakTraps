@@ -1,0 +1,39 @@
+name: OakTraps
+version: '${version}'
+main: dev.oakheart.oaktraps.OakTraps
+description: 'Lure-based mob capture cages — trap, store, and relocate mobs.'
+api-version: '26.1.2'
+authors:
+  - Loralon
+website: https://github.com/LoralonMC/OakTraps
+dependencies:
+  server:
+    WorldGuard:
+      load: BEFORE
+      required: false
+    Lands:
+      load: BEFORE
+      required: false
+    Shopkeepers:
+      load: BEFORE
+      required: false
+    MythicMobs:
+      load: BEFORE
+      required: false
+permissions:
+  oaktraps.*:
+    description: 'All OakTraps permissions'
+    default: op
+    children:
+      oaktraps.use: true
+      oaktraps.give: true
+      oaktraps.reload: true
+  oaktraps.use:
+    description: 'Use trap cages (place, capture, retrieve, release)'
+    default: true
+  oaktraps.give:
+    description: 'Give trap items to players'
+    default: op
+  oaktraps.reload:
+    description: 'Reload OakTraps configuration'
+    default: op
