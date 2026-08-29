@@ -40,6 +40,22 @@ capture-denied:
   text: "<#C27B6B>That mob can't be trapped here."
   display: action_bar
 
+# Shown on the first right-click when release.confirm-seconds is above 0.
+# Two variants: the -break one is used when release.break-on-release is on, so
+# the player is warned that confirming costs them the trap as well.
+release-confirm:
+  text: "<#6C757D>[<#6B7A5E>ᴛʀᴀᴘ<#6C757D>] <#f2ebd7>Right-click again to release <#FCD472><entity_type><#f2ebd7>."
+  display: chat
+
+release-confirm-break:
+  text: "<#6C757D>[<#6B7A5E>ᴛʀᴀᴘ<#6C757D>] <#f2ebd7>Right-click again to release <#FCD472><entity_type><#f2ebd7>. <#D89B6A>This breaks the trap."
+  display: chat
+
+# Shown when release.require-sneak is on and the player right-clicks standing up.
+release-sneak-required:
+  text: "<#f2ebd7>Sneak and right-click to <#C27B6B>release<#f2ebd7> the mob."
+  display: action_bar
+
 # ============================================================
 # COMMAND MESSAGES
 # ============================================================

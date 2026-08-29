@@ -45,12 +45,29 @@ capture:
     mode: BLACKLIST
     list:
       - "warden"
-  # Allow capturing tamed animals (wolves, cats, horses, ...).
+  # Allow capturing someone's tamed pet (wolves, cats, horses, ...).
+  # TRUE is safe: a capture is only allowed when the pet's owner matches the trap
+  # owner, so this is "move your own pet", never pet theft. Applies to OWNED mobs
+  # only — camels and skeleton-horse-trap horses report as tamed while belonging
+  # to nobody, so they count as wild and are caught like any other mob.
   can-trap-tamed: true
   # Ticks between a mob stepping on the plate and being captured (20 = 1s). A
   # short delay lets the pressure plate visibly depress — the trap "springs" —
   # before the mob is caught. Set to 0 for instant capture.
   trigger-delay-ticks: 10
+  # Particle burst played the moment a mob is caught, right after the trigger
+  # delay above, so it punctuates the trap springing rather than competing with
+  # it. Players lure mobs in from a block away, so keep it tight and brief: a
+  # sustained effect at that range hides the thing it is meant to celebrate.
+  # Set type to NONE to disable. Only particles that need no extra data are
+  # supported (DUST, BLOCK, ITEM and friends are rejected with a warning).
+  particle:
+    type: CLOUD
+    count: 12
+    # How far the burst spreads from the trap, in blocks.
+    spread: 0.25
+    # Particle velocity. Keep low so the burst stays put instead of drifting.
+    speed: 0.02
   # Restrict which worlds capturing works in.
   worlds:
     enabled: false
@@ -116,6 +133,19 @@ release:
   # If true, releasing a mob breaks the trap instead of returning it — making
   # each trap single-use. If false, the player gets the empty trap back.
   break-on-release: false
+  # A filled trap is a barrel, so the natural assumption is that right-clicking
+  # opens a container. It does not: it releases the mob, and with
+  # break-on-release on it also destroys the trap. These two settings guard that.
+  #
+  # Ask for a second right-click before releasing. The first click warns and
+  # names the mob; a second click within this many seconds commits. 0 disables
+  # the confirmation entirely.
+  confirm-seconds: 5
+  # Additionally require the player to be sneaking to release. Off by default —
+  # the confirmation above tells the player what is about to happen, where a
+  # sneak requirement only makes it harder to reach by accident. The two stack
+  # if you enable both.
+  require-sneak: false
 
 # ============================================================
 # PROTECTION (integration hooks)

@@ -18,6 +18,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -33,6 +34,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.concurrent.ConcurrentHashMap;
@@ -68,6 +70,15 @@ public final class TrapManager {
         this.visuals = visuals;
         this.store = store;
     }
+
+    /**
+     * A player's un-confirmed release. {@code trapTime} pins it to the exact trap
+     * that was clicked, so a trap picked up and replaced at the same spot between
+     * the two clicks can't inherit the confirmation.
+     */
+    private record PendingRelease(Location location, long trapTime, long expiresAt) {}
+
+    private final Map<UUID, PendingRelease> pendingReleases = new ConcurrentHashMap<>();
 
     // --- Persistence ---
 
@@ -228,6 +239,7 @@ public final class TrapManager {
             entity.remove();
             applyBlock(trap); // plate -> barrel
             playSound(trap.getLocation(), Sound.BLOCK_WOODEN_DOOR_CLOSE);
+            spawnCaptureBurst(trap.getLocation());
             plugin.debug("capture(): stored item filled=" + isTrapItemFilled(trap.getItem()));
             saveAll();
         } finally {
@@ -246,12 +258,19 @@ public final class TrapManager {
             String type = entity.getType().getKey().getKey().toLowerCase(Locale.ROOT);
             if (!config.getAllowedMode().allows(config.getAllowedList().contains(type))) return false;
         }
-        if (entity instanceof org.bukkit.entity.Tameable t && t.isTamed()) {
+        // Gate on ownership, not on the tamed flag. Some vanilla mobs report
+        // isTamed() == true while belonging to nobody: Camel#isTamed is hardcoded
+        // to true (a camel is rideable once saddled, never tamed by a player), and
+        // a skeleton-horse trap sets its horses tamed without an owner. Those are
+        // wild animals, so rejecting them for having no owner blocked every camel
+        // from being caught at all.
+        if (entity instanceof org.bukkit.entity.Tameable t && t.isTamed()
+                && t.getOwnerUniqueId() != null) {
             if (!config.isCanTrapTamed()) return false;
-            // Tamed capture only ever applies to the trap owner's own pets:
+            // Owned capture only ever applies to the trap owner's own pets:
             // a stranger's trap must never be able to steal someone's wolf/cat
             // (the serialized blob carries the tamed state to the captor).
-            if (t.getOwnerUniqueId() == null || !t.getOwnerUniqueId().equals(trap.getOwner())) {
+            if (!t.getOwnerUniqueId().equals(trap.getOwner())) {
                 return false;
             }
         }
@@ -259,6 +278,50 @@ public final class TrapManager {
     }
 
     // --- Release (right-click a filled barrel) ---
+
+    /**
+     * Player-initiated release. Applies the sneak requirement and the two-click
+     * confirmation before handing off to {@link #open}; call {@code open}
+     * directly only for releases that shouldn't be gated (API, admin tooling).
+     */
+    public void requestOpen(Trap trap, Player player, boolean returnItem) {
+        if (!trap.isFilled() || trap.getItem() == null) return;
+
+        if (config.isReleaseRequireSneak() && !player.isSneaking()) {
+            messages.send(player, "release-sneak-required");
+            return;
+        }
+
+        int seconds = config.getReleaseConfirmSeconds();
+        if (seconds <= 0) {
+            open(trap, player, returnItem);
+            return;
+        }
+
+        Location loc = trap.getLocation().toBlockLocation();
+        long now = System.currentTimeMillis();
+        pendingReleases.values().removeIf(p -> p.expiresAt() <= now);
+
+        PendingRelease pending = pendingReleases.get(player.getUniqueId());
+        if (pending != null
+                && pending.expiresAt() > now
+                && pending.location().equals(loc)
+                && pending.trapTime() == trap.getTrapTime()) {
+            pendingReleases.remove(player.getUniqueId());
+            open(trap, player, returnItem);
+            return;
+        }
+
+        ItemMeta meta = trap.getItem().getItemMeta();
+        CaptureData data = storage.readCapture(meta.getPersistentDataContainer());
+        if (data == null) return;
+
+        pendingReleases.put(player.getUniqueId(),
+                new PendingRelease(loc, trap.getTrapTime(), now + seconds * 1000L));
+        messages.send(player,
+                config.isBreakOnRelease() ? "release-confirm-break" : "release-confirm",
+                captureResolvers(data));
+    }
 
     public void open(Trap trap, Player player, boolean returnItem) {
         if (!trap.isFilled() || trap.getItem() == null) return;
@@ -288,6 +351,7 @@ public final class TrapManager {
         }
 
         registry.remove(loc);
+        clearPending(loc);
         loc.getBlock().setType(Material.AIR); // applyPhysics=true → proper light/render update
         visuals.remove(loc);
         visuals.refreshBlocks(loc);
@@ -311,6 +375,7 @@ public final class TrapManager {
     public void removeTrap(Trap trap, boolean dropItem) {
         Location loc = trap.getLocation();
         registry.remove(loc);
+        clearPending(loc);
         visuals.remove(loc);
         loc.getBlock().setType(Material.AIR); // applyPhysics=true → proper light/render update
         visuals.refreshBlocks(loc);
@@ -407,6 +472,27 @@ public final class TrapManager {
     }
 
     // --- Helpers ---
+
+    /** Drop any un-confirmed releases pointing at a trap that no longer exists. */
+    private void clearPending(Location loc) {
+        Location key = loc.toBlockLocation();
+        pendingReleases.values().removeIf(p -> p.location().equals(key));
+    }
+
+    /**
+     * Short burst at the moment the trap springs. Deliberately tight: the player
+     * lured the mob in from a block away and is watching, so a sustained effect
+     * would hide the capture instead of punctuating it.
+     */
+    private void spawnCaptureBurst(Location loc) {
+        Particle particle = config.getCaptureParticle();
+        int count = config.getCaptureParticleCount();
+        World world = loc.getWorld();
+        if (particle == null || count <= 0 || world == null) return;
+        double spread = config.getCaptureParticleSpread();
+        world.spawnParticle(particle, loc.clone().add(0.5, 0.25, 0.5),
+                count, spread, spread, spread, config.getCaptureParticleSpeed());
+    }
 
     private void playSound(Location loc, Sound sound) {
         if (loc.getWorld() != null) loc.getWorld().playSound(loc, sound, 1.0f, 1.0f);

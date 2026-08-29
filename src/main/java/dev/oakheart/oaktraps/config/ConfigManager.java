@@ -4,6 +4,7 @@ import dev.oakheart.oaktraps.OakTraps;
 import dev.oakheart.oaktraps.model.ListMode;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.block.data.BlockData;
 
 import java.io.File;
@@ -45,6 +46,10 @@ public class ConfigManager {
     private Set<String> allowedList;
     private boolean canTrapTamed;
     private int captureTriggerDelay;
+    private Particle captureParticle;
+    private int captureParticleCount;
+    private double captureParticleSpread;
+    private double captureParticleSpeed;
     private boolean worldsEnabled;
     private ListMode worldsMode;
     private Set<String> worldsList;
@@ -66,6 +71,8 @@ public class ConfigManager {
 
     // Release
     private boolean breakOnRelease;
+    private int releaseConfirmSeconds;
+    private boolean releaseRequireSneak;
 
     // Protection
     private boolean respectWorldGuard;
@@ -148,6 +155,18 @@ public class ConfigManager {
             warnings.add("trap-item.material is invalid; falling back to BARREL");
         }
 
+        String particleName = cfg.getString("capture.particle.type", "CLOUD");
+        if (!particleName.equalsIgnoreCase("NONE")) {
+            Particle p = parseParticle(particleName);
+            if (p == null) {
+                warnings.add("capture.particle.type '" + particleName + "' is not a valid particle; the capture burst is disabled");
+            } else if (p.getDataType() != Void.class) {
+                // DUST/BLOCK/ITEM and friends need an extra data argument we have
+                // no way to configure, and spawning them without it throws.
+                warnings.add("capture.particle.type '" + particleName + "' requires extra particle data, which is not supported; the capture burst is disabled");
+            }
+        }
+
         if (!warnings.isEmpty()) {
             logger.warning("=== OakTraps Configuration Warnings ===");
             warnings.forEach(w -> logger.warning("  - " + w));
@@ -170,6 +189,10 @@ public class ConfigManager {
         allowedList = lowerSet(config.getStringList("capture.allowed-entities.list"));
         canTrapTamed = config.getBoolean("capture.can-trap-tamed", true);
         captureTriggerDelay = Math.max(0, config.getInt("capture.trigger-delay-ticks", 10));
+        captureParticle = resolveCaptureParticle();
+        captureParticleCount = Math.max(0, config.getInt("capture.particle.count", 12));
+        captureParticleSpread = Math.max(0.0, config.getDouble("capture.particle.spread", 0.25));
+        captureParticleSpeed = Math.max(0.0, config.getDouble("capture.particle.speed", 0.02));
         worldsEnabled = config.getBoolean("capture.worlds.enabled", false);
         worldsMode = ListMode.fromString(config.getString("capture.worlds.mode", "BLACKLIST"), ListMode.BLACKLIST);
         worldsList = lowerSet(config.getStringList("capture.worlds.list"));
@@ -189,6 +212,8 @@ public class ConfigManager {
         cageDecoration = blockData("cage.visual.decoration", Material.DEAD_BUBBLE_CORAL_FAN, "[waterlogged=false]");
 
         breakOnRelease = config.getBoolean("release.break-on-release", false);
+        releaseConfirmSeconds = Math.max(0, config.getInt("release.confirm-seconds", 5));
+        releaseRequireSneak = config.getBoolean("release.require-sneak", false);
 
         respectWorldGuard = config.getBoolean("protection.respect-worldguard", true);
         respectLands = config.getBoolean("protection.respect-lands", true);
@@ -212,6 +237,27 @@ public class ConfigManager {
                     logger.warning("Invalid crafting ingredient material for key '" + key + "'");
                 }
             }
+        }
+    }
+
+    /**
+     * The configured capture particle, or {@code null} when disabled, unknown, or
+     * one of the data-bearing particles we can't spawn without extra arguments.
+     * {@link #validate} has already warned about the last two cases.
+     */
+    private Particle resolveCaptureParticle() {
+        String name = config.getString("capture.particle.type", "CLOUD");
+        if (name.equalsIgnoreCase("NONE")) return null;
+        Particle particle = parseParticle(name);
+        if (particle == null || particle.getDataType() != Void.class) return null;
+        return particle;
+    }
+
+    private static Particle parseParticle(String name) {
+        try {
+            return Particle.valueOf(name.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 
@@ -259,6 +305,10 @@ public class ConfigManager {
     public Set<String> getAllowedList() { return allowedList; }
     public boolean isCanTrapTamed() { return canTrapTamed; }
     public int getCaptureTriggerDelay() { return captureTriggerDelay; }
+    public Particle getCaptureParticle() { return captureParticle; }
+    public int getCaptureParticleCount() { return captureParticleCount; }
+    public double getCaptureParticleSpread() { return captureParticleSpread; }
+    public double getCaptureParticleSpeed() { return captureParticleSpeed; }
     public boolean isWorldsEnabled() { return worldsEnabled; }
     public ListMode getWorldsMode() { return worldsMode; }
     public Set<String> getWorldsList() { return worldsList; }
@@ -278,6 +328,8 @@ public class ConfigManager {
     public BlockData getCageDecoration() { return cageDecoration; }
 
     public boolean isBreakOnRelease() { return breakOnRelease; }
+    public int getReleaseConfirmSeconds() { return releaseConfirmSeconds; }
+    public boolean isReleaseRequireSneak() { return releaseRequireSneak; }
     public boolean isRespectWorldGuard() { return respectWorldGuard; }
     public boolean isRespectLands() { return respectLands; }
     public boolean isAllowPlaceInProtected() { return allowPlaceInProtected; }

@@ -99,7 +99,7 @@ public final class CageTriggerListener implements Listener {
                     plugin.getMessageManager().send(player, "interact-denied");
                     return;
                 }
-                traps.open(trap, player, player.getGameMode() != GameMode.CREATIVE);
+                traps.requestOpen(trap, player, player.getGameMode() != GameMode.CREATIVE);
             }
         }
     }
