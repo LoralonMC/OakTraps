@@ -54,8 +54,10 @@ Key settings in `config.yml`:
 
 - **trap-item** — the trap item's material, name, glow, and lore (empty/filled).
 - **capture** — allowed-entity list/mode, untrappable types, `can-trap-tamed`,
-  and per-world filtering.
+  per-world filtering, and the `particle` burst played when a trap springs.
 - **cage** — the cage block + pressure-plate trigger, and the display animation.
+- **release** — whether releasing consumes the trap (`break-on-release`), the
+  two-click confirmation (`confirm-seconds`), and an optional sneak requirement.
 - **protection** — toggle WorldGuard / Lands enforcement and whether cages may
   be placed in protected areas.
 - **mythicmobs** — allow/deny which MythicMobs can be captured.

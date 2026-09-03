@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Particle burst when a trap springs, fired after `capture.trigger-delay-ticks`
+  so it punctuates the capture rather than competing with the plate depressing.
+  Configurable under `capture.particle` (`type`, `count`, `spread`, `speed`); set
+  `type: NONE` to disable. Particles that require extra data (DUST, BLOCK, ITEM
+  and friends) are rejected at load with a config warning instead of throwing.
+- `release.confirm-seconds` (default 5): right-clicking a filled trap now asks
+  for a second right-click before releasing, naming the captured mob. A filled
+  trap is a barrel, so the natural assumption is that right-click opens a
+  container; it does not, and with `break-on-release` on it also destroys the
+  trap. Set to 0 for the previous one-click behaviour.
+- `release.require-sneak` (default false): additionally require the player to be
+  sneaking to release. Stacks with the confirmation.
+- Messages `release-confirm`, `release-confirm-break` (used when
+  `break-on-release` is on, so the player is warned the trap is spent) and
+  `release-sneak-required`.
+
 ## [1.0.0] - 2026-06-18
 
 ### Added
