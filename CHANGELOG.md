@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `capture.protected-tags`: PDC keys that make an entity untrappable, whatever
+  `capture.allowed-entities` says. Ships with `oakpets:pet_owner`, so OakPets
+  pets can never be captured. A live pet already couldn't trip a plate (OakPets
+  cancels the interact event), but a pet that has leaked out of OakPets's
+  bookkeeping looks like an ordinary pig, and could be lured onto a trap and
+  sealed inside the item. Reported in-game with a trap reading `ᴄᴀʀʀʏɪɴɢ
+  md_squirrel_pet`. A tag means the owning plugin manages that entity's
+  lifetime, so a trap has to leave it alone. Invalid entries are skipped with a
+  config warning.
+
 - Particle burst when a trap springs, fired after `capture.trigger-delay-ticks`
   so it punctuates the capture rather than competing with the plate depressing.
   Configurable under `capture.particle` (`type`, `count`, `spread`, `speed`); set

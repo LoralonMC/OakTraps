@@ -4,6 +4,7 @@ import dev.oakheart.oaktraps.OakTraps;
 import dev.oakheart.oaktraps.model.ListMode;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.block.data.BlockData;
 
@@ -44,6 +45,7 @@ public class ConfigManager {
     private boolean allowedEnabled;
     private ListMode allowedMode;
     private Set<String> allowedList;
+    private Set<NamespacedKey> protectedTags;
     private boolean canTrapTamed;
     private int captureTriggerDelay;
     private Particle captureParticle;
@@ -188,6 +190,7 @@ public class ConfigManager {
         allowedMode = ListMode.fromString(config.getString("capture.allowed-entities.mode", "BLACKLIST"), ListMode.BLACKLIST);
         allowedList = lowerSet(config.getStringList("capture.allowed-entities.list"));
         canTrapTamed = config.getBoolean("capture.can-trap-tamed", true);
+        protectedTags = parseKeys(config.getStringList("capture.protected-tags"));
         captureTriggerDelay = Math.max(0, config.getInt("capture.trigger-delay-ticks", 10));
         captureParticle = resolveCaptureParticle();
         captureParticleCount = Math.max(0, config.getInt("capture.particle.count", 12));
@@ -281,6 +284,24 @@ public class ConfigManager {
         }
     }
 
+    /**
+     * Parse {@code namespace:key} PDC keys, skipping (with a warning) any that
+     * aren't valid. A typo here would otherwise silently drop a protection.
+     */
+    private Set<NamespacedKey> parseKeys(List<String> values) {
+        Set<NamespacedKey> keys = new HashSet<>();
+        for (String v : values) {
+            if (v == null || v.isBlank()) continue;
+            NamespacedKey key = NamespacedKey.fromString(v.trim().toLowerCase(Locale.ROOT));
+            if (key == null) {
+                logger.warning("capture.protected-tags entry '" + v + "' is not a valid namespace:key; ignoring it.");
+                continue;
+            }
+            keys.add(key);
+        }
+        return keys;
+    }
+
     private Set<String> lowerSet(List<String> values) {
         Set<String> set = new HashSet<>();
         for (String v : values) {
@@ -300,6 +321,7 @@ public class ConfigManager {
     public List<String> getTrapLoreEmpty() { return trapLoreEmpty; }
     public List<String> getTrapLoreFilled() { return trapLoreFilled; }
 
+    public Set<NamespacedKey> getProtectedTags() { return protectedTags; }
     public boolean isAllowedEnabled() { return allowedEnabled; }
     public ListMode getAllowedMode() { return allowedMode; }
     public Set<String> getAllowedList() { return allowedList; }

@@ -45,6 +45,16 @@ capture:
     mode: BLACKLIST
     list:
       - "warden"
+  # PDC keys that make an entity untrappable, whatever the list above says.
+  # Other plugins tag the entities they own this way; a tagged entity has a
+  # plugin managing when it exists, so sealing it inside a trap item strands it.
+  #
+  # oakpets:pet_owner is on every OakPets pet, including one that has leaked out
+  # of OakPets's own bookkeeping and looks like an ordinary pig. That is the
+  # case this exists for, since a live pet already can't trip a plate (OakPets
+  # cancels the interact).
+  protected-tags:
+    - "oakpets:pet_owner"
   # Allow capturing someone's tamed pet (wolves, cats, horses, ...).
   # TRUE is safe: a capture is only allowed when the pet's owner matches the trap
   # owner, so this is "move your own pet", never pet theft. Applies to OWNED mobs

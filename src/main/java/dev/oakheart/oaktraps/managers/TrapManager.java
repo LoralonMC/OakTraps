@@ -18,6 +18,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
@@ -249,6 +250,13 @@ public final class TrapManager {
 
     private boolean canCapture(Trap trap, LivingEntity entity) {
         if (entity.isDead() || !entity.isValid()) return false;
+
+        // Entities another plugin has tagged as off-limits (OakPets pets, say).
+        // Checked before every other rule: a tag means the owning plugin manages
+        // that entity's lifetime, so capturing it would strand it inside an item.
+        for (NamespacedKey key : config.getProtectedTags()) {
+            if (entity.getPersistentDataContainer().has(key)) return false;
+        }
 
         if (config.isWorldsEnabled()) {
             String world = entity.getWorld().getName().toLowerCase(Locale.ROOT);
