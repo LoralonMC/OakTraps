@@ -2,7 +2,7 @@ name: OakTraps
 version: '${version}'
 main: dev.oakheart.oaktraps.OakTraps
 description: 'Lure-based mob capture cages — trap, store, and relocate mobs.'
-api-version: '26.1.2'
+api-version: '26.3'
 authors:
   - Loralon
 website: https://github.com/LoralonMC/OakTraps

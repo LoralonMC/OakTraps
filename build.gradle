@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'dev.oakheart'
-version = '1.1.0'
+version = '1.2.0'
 
 repositories {
     mavenCentral()
@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:26.1.2.build.+")
+    compileOnly("io.papermc.paper:paper-api:26.3.build.+")
     // MythicMobs is integrated via reflection (see hooks/MythicMobsHook) — no compile dep.
     compileOnly("com.github.angeschossen:LandsAPI:7.24.1")
     compileOnly("com.nisovin.shopkeepers:ShopkeepersAPI:2.24.0")
